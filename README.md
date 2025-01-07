@@ -14,7 +14,7 @@ Aby skonfigurować środowisko potrzebne do uruchomienia projektu, wykonaj poni�
 ### 1. Klonowanie repozytorium
 Najpierw sklonuj to repozytorium:
 ```bash
-git clone https://github.com/username/repo-name.git
+git clone <git repository url>
 cd repo-name
 ```
 ### 2. Utworzenie środowiska z pliku environment.yml
