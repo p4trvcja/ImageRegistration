@@ -16,14 +16,6 @@ identified by the archive flag.
 Example json file contents:
 
 {
- "SimpleITK.jpg": {
-  "sha512": "f1b5ce1bf9d7ebc0bd66f1c3bc0f90d9e9798efc7d0c5ea7bebe0435f173355b27df632971d1771dc1fc3743c76753e6a28f6ed43c5531866bfa2b38f1b8fd46"
- },
- "POPI/meta/00-P.mhd": {
-  "url": "http://tux.creatis.insa-lyon.fr/~srit/POPI/Images/MetaImage/00-MetaImage.tar",
-  "archive": "true",
-  "sha512": "09fcb39c787eee3822040fcbf30d9c83fced4246c518a24ab14537af4b06ebd438e2f36be91e6e26f42a56250925cf1bfa0d2f2f2192ed2b98e6a9fb5f5069fc"
- },
  "CIRS057A_MR_CT_DICOM/readme.txt": {
   "archive": "true",
   "sha512": "d5130cfca8467c4efe1c6b4057684651d7b74a8e7028d9402aff8e3d62287761b215bc871ad200d4f177b462f7c9358f1518e6e48cece2b51c6d8e3bb89d3eef"
@@ -43,9 +35,6 @@ import json
 
 import errno
 import warnings
-
-# http://stackoverflow.com/questions/2028517/python-urllib2-progress-hook
-
 
 def url_download_report(bytes_so_far, url_download_size, total_size):
     percent = float(bytes_so_far) / total_size
@@ -116,7 +105,7 @@ def url_download_read(url, outputfile, url_download_size=8192 * 2, report_hook=N
     return "Downloaded Successfully"
 
 
-# http://stackoverflow.com/questions/600268/mkdir-p-functionality-in-python?rq=1
+
 def mkdir_p(path):
     try:
         os.makedirs(path)
@@ -127,7 +116,7 @@ def mkdir_p(path):
             raise
 
 
-# http://stackoverflow.com/questions/2536307/decorators-in-the-python-standard-lib-deprecated-specifically
+
 def deprecated(func):
     """This is a decorator which can be used to mark functions
     as deprecated. It will result in a warning being emmitted
@@ -176,86 +165,6 @@ def output_hash_is_valid(known_sha512, output_file):
             sha512.update(url_download)
     retreived_sha512 = sha512.hexdigest()
     return retreived_sha512 == known_sha512
-
-
-def fetch_data_one(
-    onefilename, output_directory, manifest_file, verify=True, force=False
-):
-    import tarfile, zipfile
-
-    with open(manifest_file, "r") as fp:
-        manifest = json.load(fp)
-    assert onefilename in manifest, "ERROR: {0} does not exist in {1}".format(
-        onefilename, manifest_file
-    )
-
-    sys.stdout.write("Fetching {0}\n".format(onefilename))
-    output_file = os.path.realpath(os.path.join(output_directory, onefilename))
-    data_dictionary = manifest[onefilename]
-    sha512 = data_dictionary["sha512"]
-    # List of places where the file can be downloaded from
-    all_urls = []
-    for url_base in get_servers():
-        all_urls.append(url_base.replace("%(hash)", sha512))
-    if "url" in data_dictionary:
-        all_urls.append(data_dictionary["url"])
-
-    new_download = False
-
-    for url in all_urls:
-        # Only download if force is true or the file does not exist.
-        if force or not os.path.exists(output_file):
-            mkdir_p(os.path.dirname(output_file))
-            url_download_read(url, output_file, report_hook=url_download_report)
-            # Check if a file was downloaded and has the correct hash
-            if output_hash_is_valid(sha512, output_file):
-                new_download = True
-                # Stop looking once found
-                break
-            # If the file exists this means the hash is invalid we have a problem.
-            elif os.path.exists(output_file):
-                error_msg = "File " + output_file
-                error_msg += " has incorrect hash value, " + sha512 + " was expected."
-                raise Exception(error_msg)
-
-    # Did not find the file anywhere.
-    if not os.path.exists(output_file):
-        error_msg = "File " + "'" + os.path.basename(output_file) + "'"
-        error_msg += " could not be found in any of the following locations:\n"
-        error_msg += ", ".join(all_urls)
-        raise Exception(error_msg)
-
-    if not new_download and verify:
-        # If the file was part of an archive then we don't verify it. These
-        # files are only verified on download
-        if (not "archive" in data_dictionary) and (
-            not output_hash_is_valid(sha512, output_file)
-        ):
-            # Attempt to download if sha512 is incorrect.
-            fetch_data_one(
-                onefilename, output_directory, manifest_file, verify, force=True
-            )
-    # If the file is in an archive, unpack it.
-    if tarfile.is_tarfile(output_file) or zipfile.is_zipfile(output_file):
-        tmp_output_file = output_file + ".tmp"
-        os.rename(output_file, tmp_output_file)
-        if tarfile.is_tarfile(tmp_output_file):
-            archive = tarfile.open(tmp_output_file)
-        if zipfile.is_zipfile(tmp_output_file):
-            archive = zipfile.ZipFile(tmp_output_file, "r")
-        archive.extractall(os.path.dirname(tmp_output_file))
-        archive.close()
-        os.remove(tmp_output_file)
-
-    return output_file
-
-
-def fetch_data_all(output_directory, manifest_file, verify=True):
-    with open(manifest_file, "r") as fp:
-        manifest = json.load(fp)
-    for filename in manifest:
-        fetch_data_one(filename, output_directory, manifest_file, verify, force=False)
-
 
 def fetch_data(cache_file_name, verify=False, cache_directory_name="../Data"):
     """
