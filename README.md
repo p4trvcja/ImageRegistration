@@ -1,7 +1,7 @@
 # Image Registration
 
 ## Overview
-The primary aim of the project is to design, implement, and analyze algorithms for 3D object registration, with a focus on accuracy and efficiency. This project emphasizes the registration of medical images, which are crucial in diagnostics and treatment, especially for detecting diseases and identifying cancerous changes.
+The primary aim of the project is to design, implement, and analyze algorithms for 3D object registration, prioritizing both accuracy and efficiency. This project emphasizes the registration of medical images, which are crucial in diagnostics and treatment, especially for detecting diseases and identifying cancerous changes.
 
 ## Expected Outcomes
 - Development of algorithms for 3D object registration, encompassing both linear and nonlinear methods.
@@ -16,6 +16,7 @@ The primary aim of the project is to design, implement, and analyze algorithms f
 
 ## Methodology
 The project leverages both linear transformations (e.g., translations, rotations, scaling) and nonlinear transformations (e.g., free-form deformations). Key methods include:
+
 Linear Methods
 - Rigid transformations (Rigid Registration, Euler Transform).
 - Affine transformations (Affine Registration).
